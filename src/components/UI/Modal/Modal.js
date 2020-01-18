@@ -8,7 +8,7 @@ class Modal extends Component {
     //An ulternate methods for saving resource and runing this component only if show props
     // change exist using a Functional component, with React.memo.
     shouldComponentUpdate(nextProps, nextState) {
-        return nextProps.show !== this.props.show;
+        return nextProps.show !== this.props.show || nextProps.children !== this.props.children;
     }
 
     // componentDidUpdate() {
