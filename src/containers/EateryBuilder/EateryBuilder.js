@@ -31,9 +31,10 @@ class EateryBuilder extends Component {
     }
 
     componentDidMount() {
+        //console.log(this.props)
         axios.get('/ingredients.json')
             .then(response => {
-                console.log(response.data);
+                //console.log(response.data);
                 this.setState({ ingredients: response.data });
             })
             .catch(error => {
@@ -104,45 +105,20 @@ class EateryBuilder extends Component {
     }
 
     continuePurchaseHandler = () => {
-        //alert('You Continue');
         // this.setState((prevState) => {
         //      return { loading: !prevState.loading}
         // });
-        const initialIngredients = {
-            salad : 0,
-            bacon: 0,
-            cheese: 0,
-            meat: 0
-        };
-    
-        this.setState({ loading: true });
-        const order = {
-            ingredients: this.state.ingredients,
-            price: this.state.totalPrice,
-            customer: {
-                name: 'Omotola Famodun',
-                address: {
-                    street: '52 Scarborough Ontario',
-                    zipCode: '02770',
-                    country: 'Canada'
-                },
-                email: 'omotola.famodun@gmail.com'
-            },
-            deliveryMethod: 'Uber Eats',
-
+        //this.props.history.push('/checkout');
+        const queryParams = [];
+        for (let i in this.state.ingredients) {
+            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]))
         }
-        axios.post('/orders.json', order)
-            .then(response => {
-                console.log(response);
-                this.setState({ loading: false, purchasing: false });
-                if (response.status >= 200 && response.status <= 300) {
-                    this.setState({ingredients : initialIngredients })
-                }
-            })
-            .catch(error => {
-                //console.log(error);
-                this.setState({ loading: false, purchasing: false });
-            })
+        queryParams.push('price=' + this.state.totalPrice);
+        const queryString = queryParams.join('&');
+        this.props.history.push({
+            pathname: '/checkout',
+            search: '?' + queryString 
+        });
     }
 
     render () {
