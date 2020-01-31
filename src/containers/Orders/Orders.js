@@ -33,7 +33,7 @@ class Orders extends Component {
         let orders = null;
         if(this.state.orders.length > 0) {
             orders = Object.values(this.state.orders).map((order) => {
-                console.log(order);
+                //console.log(order);
                 return <Order key={order.id} ingredients={order.ingredients} price={+order.price} customer={order.customer} />
             })
         }
