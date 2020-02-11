@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from '../../axios-orders';
+import { connect } from 'react-redux';
 
 import Aux from '../../hoc/Aux';
 import Burger from '../../components/Eatery/Burger/Burger';
@@ -8,13 +9,7 @@ import Modal from '../../components/UI/Modal/Modal';
 import OrderSummary from '../../components/Eatery/Burger/OrderSummary/OrderSummary';
 import Spinner from '../../components/UI/Spinner/Spinner';
 import withErrorHandler from '../../hoc/withErrorHandler/withErrorHandler';
-
-const INGREDIENTS_PRICES = {
-    salad: 0.5,
-    cheese: 0.4,
-    meat: 1.3,
-    bacon: 0.7
-}
+import * as actions from '../store/actions/index';
 
 class EateryBuilder extends Component {
     // constructor(props) {
@@ -22,25 +17,30 @@ class EateryBuilder extends Component {
     //     this.state = {...}
     // }
     state = {
-        ingredients: null,
-        totalPrice: 4,
+        //ingredients: null,
+        //totalPrice: 4,
         purchasable: false,
-        purchasing: false,
-        loading: false,
-        error: false
+        purchasing: false
+        //loading: false,
+        // error: false
     }
 
     componentDidMount() {
         //console.log(this.props)
-        axios.get('/ingredients.json')
-            .then(response => {
-                //console.log(response.data);
-                this.setState({ ingredients: response.data });
-            })
-            .catch(error => {
-                this.setState({error: true })
-                //console.log(error);
-            })
+        // Two ways to do this. 1. either call a redux action after server call or 
+        // axios.get('/ingredients.json')
+        //     .then(response => {
+        //         //console.log(response.data);
+        //         this.setState({ ingredients: response.data });
+        //     })
+        //     .catch(error => {
+        //         this.setState({error: true })
+        //         //console.log(error);
+        //     })
+
+        // 2. do the whole async action in redux using thunk, mapDispatchToProps and call d func with props.
+        this.props.onInitIngredients();
+
     }
 
     updatePurchaseState(ingredients) {
@@ -56,44 +56,7 @@ class EateryBuilder extends Component {
         let reducer  = (accumulator, currentValue) => accumulator + currentValue;
         
         const sum = ingredientValues.reduce(reducer);
-        this.setState({ purchasable : sum > 0 });
-    }
-
-    addIngredientHandler = (type) => {
-        const oldCount = this.state.ingredients[type];
-        const updatedCount = oldCount + 1;
-        const updatedIngredients = {...this.state.ingredients};
-        updatedIngredients[type] = updatedCount;
-
-        const oldPrice = this.state.totalPrice;
-        const additionalPrice = INGREDIENTS_PRICES[type];
-        const updatedPrice = oldPrice + additionalPrice;
-
-        this.setState({
-            ingredients: updatedIngredients, 
-            totalPrice: updatedPrice
-        });
-        this.updatePurchaseState(updatedIngredients);
-    }
-
-    removeIngredientHandler = (type) => {
-        const oldCount = this.state.ingredients[type];
-        let updatedCount = 0;
-        if (oldCount <= 0) {
-            return;
-        }
-        const updatedIngredients = {...this.state.ingredients};
-        updatedIngredients[type] = updatedCount;
-
-        const oldPrice = this.state.totalPrice;
-        const additionalPrice = INGREDIENTS_PRICES[type];
-        const updatedPrice = oldPrice - additionalPrice;
-
-        this.setState({
-            ingredients: updatedIngredients, 
-            totalPrice: updatedPrice
-        });
-        this.updatePurchaseState(updatedIngredients);
+        return sum > 0;
     }
 
     purchaseHandler = () => {
@@ -105,58 +68,49 @@ class EateryBuilder extends Component {
     }
 
     continuePurchaseHandler = () => {
-        // this.setState((prevState) => {
-        //      return { loading: !prevState.loading}
-        // });
-        //this.props.history.push('/checkout');
-        const queryParams = [];
-        for (let i in this.state.ingredients) {
-            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]))
-        }
-        queryParams.push('price=' + this.state.totalPrice);
-        const queryString = queryParams.join('&');
-        this.props.history.push({
-            pathname: '/checkout',
-            search: '?' + queryString 
-        });
+        this.props.onInitPurchase();
+        //Building query params data to send with url no longer needed now that redux is available. 
+        this.props.history.push('/checkout');
     }
 
     render () {
         const disabledInfo = {
-            ...this.state.ingredients
-        };
+            ...this.props.ings
+        }; 
+        //console.log(this.props.ings)
         for (let key in disabledInfo) {
             disabledInfo[key] = disabledInfo[key] <= 0;
         }
 
         let orderSummary = null;
 
-        let burger = this.state.error ? <p style={{textAlign: 'center'}}>Ingredients can't be loaded!</p> : <Spinner />
+        let burger = this.props.error ? <p style={{textAlign: 'center'}}>Ingredients can't be loaded!</p> : <Spinner />
 
-        if (this.state.ingredients) {
+        if (this.props.ings) {
         burger = (
             <Aux>
-            <Burger ingredients={this.state.ingredients} />
+            <Burger ingredients={this.props.ings} /> 
                 <BuildControls
-                    addIngredient={this.addIngredientHandler}
-                    removeIngredient={this.removeIngredientHandler}
+                    addIngredient={this.props.onIngredientAdded}
+                    removeIngredient={this.props.onIngredientRemoved}
                     disabled={disabledInfo}
-                    purchasable={this.state.purchasable}
-                    price={this.state.totalPrice}
+                    //purchasable={this.props.purchasable}
+                    purchasable={this.updatePurchaseState(this.props.ings)}
+                    price={this.props.price}
                     order={this.purchaseHandler} />
             </Aux>
         );
         orderSummary = (
             <OrderSummary 
-            ingredients={this.state.ingredients} 
-            price={this.state.totalPrice} 
+            ingredients={this.props.ings}//{this.state.ingredients} 
+            price={this.props.price} 
             cancelOrder={this.cancelPurchaseHandler}
             continueOrder={this.continuePurchaseHandler}/> )
         }
 
-        if (this.state.loading) {
-            orderSummary = <Spinner />;
-        }
+        // if (this.state.loading) {
+        //     orderSummary = <Spinner />;
+        // }
         return (
             <Aux>
                 <Modal show={this.state.purchasing} clicked={this.cancelPurchaseHandler}>
@@ -168,4 +122,24 @@ class EateryBuilder extends Component {
     }
 }
 
-export default withErrorHandler(EateryBuilder, axios);
+const mapStateToProps = state => {
+    return {
+        ings: state.eateryBuilder.ingredients,
+        price: state.eateryBuilder.totalPrice,
+        error: state.eateryBuilder.error
+        //purchasable: state.purchasable
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onIngredientAdded: (ingName) => dispatch(actions.addIngredient(ingName)),
+        onIngredientRemoved: (ingName) => dispatch(actions.removeIngredient(ingName)),
+        onInitIngredients: () => dispatch(actions.initIngredients()),
+        onInitPurchase: () => dispatch(actions.purchaseInit())
+        // onIngredientAdded: (ingName) => dispatch({type: actionTypes.ADD_INGREDIENT, ingredientName: ingName}),
+        // onIngredientRemoved: (ingName) => dispatch({type: actionTypes.REMOVE_INGREDIENT, ingredientName: ingName})
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(withErrorHandler(EateryBuilder, axios));

@@ -1,4 +1,4 @@
-.Spinner {
+/* .Spinner {
   font-size: 10px;
   margin: 50px auto;
   text-indent: -9999em;
@@ -29,7 +29,7 @@
   content: '';
 }
 .Spinner:after {
-  background: #0dc5c1;
+  background: #fff;
   width: 75%;
   height: 75%;
   border-radius: 50%;
@@ -60,10 +60,10 @@
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
   }
-}
+} */
 
 
-/* .Spinner {
+.Spinner {
     font-size: 10px;
     margin: 50px auto;
     text-indent: -9999em;
@@ -126,4 +126,4 @@
       transform: rotate(360deg);
     }
   }
-   */
+  
