@@ -20,7 +20,7 @@ class EateryBuilder extends Component {
         //ingredients: null,
         //totalPrice: 4,
         purchasable: false,
-        purchasing: false
+        purchasing: false,
         //loading: false,
         // error: false
     }
@@ -60,7 +60,14 @@ class EateryBuilder extends Component {
     }
 
     purchaseHandler = () => {
-        this.setState({ purchasing: true });
+        //If not authenticated, failed to proceed but ask customer to login.
+        if (this.props.isAuthenticated) {
+            this.setState({ purchasing: true });
+        } else {
+            this.props.onSetAuthRedirectPath('/checkout');
+            this.props.history.push('/signup')
+        }
+        
     }
 
     cancelPurchaseHandler = () => {
@@ -97,6 +104,7 @@ class EateryBuilder extends Component {
                     //purchasable={this.props.purchasable}
                     purchasable={this.updatePurchaseState(this.props.ings)}
                     price={this.props.price}
+                    isAuthenticated={this.props.isAuthenticated}
                     order={this.purchaseHandler} />
             </Aux>
         );
@@ -126,7 +134,8 @@ const mapStateToProps = state => {
     return {
         ings: state.eateryBuilder.ingredients,
         price: state.eateryBuilder.totalPrice,
-        error: state.eateryBuilder.error
+        error: state.eateryBuilder.error,
+        isAuthenticated: state.auth.token !== null
         //purchasable: state.purchasable
     }
 }
@@ -136,7 +145,8 @@ const mapDispatchToProps = dispatch => {
         onIngredientAdded: (ingName) => dispatch(actions.addIngredient(ingName)),
         onIngredientRemoved: (ingName) => dispatch(actions.removeIngredient(ingName)),
         onInitIngredients: () => dispatch(actions.initIngredients()),
-        onInitPurchase: () => dispatch(actions.purchaseInit())
+        onInitPurchase: () => dispatch(actions.purchaseInit()),
+        onSetAuthRedirectPath: (path) => dispatch(actions.setAuthRedirectPath(path))
         // onIngredientAdded: (ingName) => dispatch({type: actionTypes.ADD_INGREDIENT, ingredientName: ingName}),
         // onIngredientRemoved: (ingName) => dispatch({type: actionTypes.REMOVE_INGREDIENT, ingredientName: ingName})
     }
